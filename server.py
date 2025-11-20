@@ -5,6 +5,7 @@ from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 app = FastAPI()
 
@@ -86,3 +87,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
         manager.disconnect(websocket)
     except Exception:
         manager.disconnect(websocket)
+
+# 🔥 Render が必要とする起動コード（必須）
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
