@@ -3,7 +3,7 @@ import os
 from typing import List
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -36,6 +36,9 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+# -----------------------------------------------------
+# CORS (必須)
+# -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,10 +47,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -----------------------------------------------------
+# ルート
+# -----------------------------------------------------
+
 @app.get("/", response_class=PlainTextResponse)
 def root():
     return "GiftHub server is running."
 
+# 追加した HTML 返却ルート（ここが重要）
+@app.get("/gift-tester.html", response_class=HTMLResponse)
+def gift_tester():
+    with open("gift-tester.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+# ギフト受付
 @app.post("/gift")
 async def gift(
     token: str = Query(...),
@@ -73,6 +87,7 @@ async def gift(
     await manager.broadcast(payload)
     return {"status": "ok", "sent_to": len(manager.active_connections)}
 
+# WebSocket
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     if token != SECRET_TOKEN:
@@ -88,13 +103,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     except Exception:
         manager.disconnect(websocket)
 
-# 🔥 Render が必要とする起動コード（必須）
+# -----------------------------------------------------
+# Render 用の起動コード
+# -----------------------------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-from fastapi.responses import HTMLResponse
-
-@app.get("/gift-tester.html", response_class=HTMLResponse)
-def gift_tester():
-    with open("gift-tester.html", "r", encoding="utf-8") as f:
-        return f.read()
