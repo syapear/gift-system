@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GiftTester</title>
+    <style>
+        body {
+            background: #111;
+            color: #fff;
+            font-family: Arial;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Gift Key Test Sender</h1>
+
+<p>押したいキーを入力してください</p>
+<input id="keyInput" type="text" maxlength="1" style="font-size:20px; padding:10px;">
+<br><br>
+
+<button onclick="send()">送信する</button>
+
+<p id="result" style="margin-top:20px;"></p>
+
+<script>
+async function send() {
+    const key = document.getElementById("keyInput").value;
+    if (!key) {
+        alert("キーを入力してください");
+        return;
+    }
+
+    const url = "https://gift-system.onrender.com/gift"
+              + "?token=nezusystemde"
+              + "&key=" + encodeURIComponent(key)
+              + "&duration_ms=50";
+
+    const res = await fetch(url, { method: "POST" });
+    const text = await res.text();
+    document.getElementById("result").innerText = text;
+}
+</script>
+
+</body>
+</html>
