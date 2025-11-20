@@ -92,3 +92,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+from fastapi.responses import HTMLResponse
+
+@app.get("/gift-tester.html", response_class=HTMLResponse)
+def gift_tester():
+    with open("gift-tester.html", "r", encoding="utf-8") as f:
+        return f.read()
