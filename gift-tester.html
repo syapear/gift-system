@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Gift Tester</title>
+<meta charset="UTF-8">
+<title>Gift Tester</title>
 </head>
 <body>
-    <h1>Key Sender Test</h1>
-    <p>PC の key_receiver.py にキーを送信できます。</p>
 
-    <input id="key" placeholder="送信したいキーを入力 (例: a, w, space)">
-    <button onclick="sendKey()">送信</button>
+<h1>Key Sender Test</h1>
+<p>PC の key_receiver.py にキーを送信できます。</p>
 
-    <p id="result"></p>
+<input id="key" placeholder="送信したいキーを入力 (例: a)">
+<button onclick="sendKey()">送信</button>
+
+<p id="result"></p>
 
 <script>
 async function sendKey() {
     const key = document.getElementById("key").value;
     if (!key) return alert("キーを入力してください！");
 
-    const res = await fetch("/send-key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key })
+    // ★★★ ここが重要 ★★★
+    const url = `https://gift-system.onrender.com/gift?token=nezusystemde&key=${key}&duration_ms=50`;
+
+    const res = await fetch(url, {
+        method: "POST"
     });
 
     const data = await res.text();
     document.getElementById("result").innerText = data;
 }
 </script>
+
 </body>
 </html>
