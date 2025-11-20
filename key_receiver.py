@@ -4,7 +4,7 @@ import time
 import websockets
 import keyboard
 
-SERVER_URL = "wss://YOUR_APP_URL/ws?token=nezusystemde"
+SERVER_URL = "wss://gift-system.onrender.com/ws?token=nezusystemde"
 
 async def handle_messages():
     print("Connecting to", SERVER_URL)
