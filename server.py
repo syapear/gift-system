@@ -11,6 +11,12 @@ app = FastAPI()
 
 SECRET_TOKEN = os.getenv("GIFT_HUB_TOKEN", "nezusystemde")
 
+# ==============================
+# キルカウント（追加部分）
+# ==============================
+kill_count = 0
+
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -34,10 +40,11 @@ class ConnectionManager:
         for d in dead:
             self.disconnect(d)
 
+
 manager = ConnectionManager()
 
 # -----------------------------------------------------
-# CORS (必須)
+# CORS
 # -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
@@ -48,20 +55,82 @@ app.add_middleware(
 )
 
 # -----------------------------------------------------
-# ルート
+# 🌈 ルート（OBS用・虹色キル表示）
 # -----------------------------------------------------
+@app.get("/", response_class=HTMLResponse)
+def kill_overlay():
+    global kill_count
+    return f"""
+    <html>
+    <head>
+        <meta http-equiv="refresh" content="1">
+        <style>
+            body {{
+                background: rgba(0,0,0,0);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }}
 
-@app.get("/", response_class=PlainTextResponse)
-def root():
-    return "GiftHub server is running."
+            .rainbow {{
+                font-size: 120px;
+                font-weight: bold;
+                font-family: Arial, sans-serif;
+                animation: rainbow 3s linear infinite;
+            }}
 
-# 追加した HTML 返却ルート（ここが重要）
+            @keyframes rainbow {{
+                0%   {{ color: red; }}
+                16%  {{ color: orange; }}
+                32%  {{ color: yellow; }}
+                48%  {{ color: green; }}
+                64%  {{ color: cyan; }}
+                80%  {{ color: blue; }}
+                100% {{ color: violet; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="rainbow">{kill_count}</div>
+    </body>
+    </html>
+    """
+
+
+# -----------------------------------------------------
+# + / - キル追加
+# -----------------------------------------------------
+@app.get("/add", response_class=PlainTextResponse)
+def add(value: int = Query(...)):
+    global kill_count
+    kill_count += value
+    return str(kill_count)
+
+
+# -----------------------------------------------------
+# リセット
+# -----------------------------------------------------
+@app.get("/reset", response_class=PlainTextResponse)
+def reset():
+    global kill_count
+    kill_count = 0
+    return "0"
+
+
+# -----------------------------------------------------
+# 既存：テスト用HTML
+# -----------------------------------------------------
 @app.get("/gift-tester.html", response_class=HTMLResponse)
 def gift_tester():
     with open("gift-tester.html", "r", encoding="utf-8") as f:
         return f.read()
 
-# ギフト受付
+
+# -----------------------------------------------------
+# 既存：ギフト受付（キー操作）
+# -----------------------------------------------------
 @app.post("/gift")
 async def gift(
     token: str = Query(...),
@@ -87,7 +156,10 @@ async def gift(
     await manager.broadcast(payload)
     return {"status": "ok", "sent_to": len(manager.active_connections)}
 
-# WebSocket
+
+# -----------------------------------------------------
+# 既存：WebSocket
+# -----------------------------------------------------
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     if token != SECRET_TOKEN:
@@ -103,8 +175,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     except Exception:
         manager.disconnect(websocket)
 
+
 # -----------------------------------------------------
-# Render 用の起動コード
+# Render 用の起動
 # -----------------------------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
