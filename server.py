@@ -2,7 +2,7 @@ import json
 import os
 from typing import List
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException, Request
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -12,7 +12,7 @@ app = FastAPI()
 SECRET_TOKEN = os.getenv("GIFT_HUB_TOKEN", "nezusystemde")
 
 # ==============================
-# キルカウント（追加部分）
+# キルカウント
 # ==============================
 kill_count = 0
 
@@ -100,20 +100,29 @@ def kill_overlay():
 
 
 # -----------------------------------------------------
-# + / - キル追加
+# + / - キル追加（GET / POST 両対応）
 # -----------------------------------------------------
-@app.get("/add", response_class=PlainTextResponse)
-def add(value: int = Query(...)):
+@app.api_route("/add", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def add(request: Request):
     global kill_count
-    kill_count += value
+
+    # URLパラメータから value を取得
+    value = request.query_params.get("value")
+
+    try:
+        value = int(value)
+        kill_count += value
+    except:
+        pass
+
     return str(kill_count)
 
 
 # -----------------------------------------------------
-# リセット
+# リセット（GET / POST 両対応）
 # -----------------------------------------------------
-@app.get("/reset", response_class=PlainTextResponse)
-def reset():
+@app.api_route("/reset", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def reset():
     global kill_count
     kill_count = 0
     return "0"
