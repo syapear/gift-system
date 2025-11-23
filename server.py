@@ -55,7 +55,7 @@ app.add_middleware(
 )
 
 # -----------------------------------------------------
-# 🌈 ルート（OBS用・虹色キル表示）
+# 🤍 ルート（OBS用・白文字キル表示）
 # -----------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def kill_overlay():
@@ -74,26 +74,16 @@ def kill_overlay():
                 margin: 0;
             }}
 
-            .rainbow {{
+            .counter {{
                 font-size: 120px;
                 font-weight: bold;
                 font-family: Arial, sans-serif;
-                animation: rainbow 3s linear infinite;
-            }}
-
-            @keyframes rainbow {{
-                0%   {{ color: red; }}
-                16%  {{ color: orange; }}
-                32%  {{ color: yellow; }}
-                48%  {{ color: green; }}
-                64%  {{ color: cyan; }}
-                80%  {{ color: blue; }}
-                100% {{ color: violet; }}
+                color: white;
             }}
         </style>
     </head>
     <body>
-        <div class="rainbow">{kill_count}</div>
+        <div class="counter">{kill_count}</div>
     </body>
     </html>
     """
@@ -105,8 +95,6 @@ def kill_overlay():
 @app.api_route("/add", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def add(request: Request):
     global kill_count
-
-    # URLパラメータから value を取得
     value = request.query_params.get("value")
 
     try:
@@ -119,13 +107,51 @@ async def add(request: Request):
 
 
 # -----------------------------------------------------
-# リセット（GET / POST 両対応）
+# ♻ リセット（GET / POST 両対応）
 # -----------------------------------------------------
 @app.api_route("/reset", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def reset():
     global kill_count
     kill_count = 0
     return "0"
+
+
+# -----------------------------------------------------
+# 🎮 Numpadキーで増減
+# -----------------------------------------------------
+@app.api_route("/key", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def key_adjust(numpad: int = Query(...)):
+    global kill_count
+
+    if numpad == 1:
+        kill_count += 1
+    elif numpad == 2:
+        kill_count += 5
+    elif numpad == 3:
+        kill_count += 10
+    else:
+        return "Invalid key"
+
+    return str(kill_count)
+
+
+# -----------------------------------------------------
+# ✍️ 手動で値をセット
+# -----------------------------------------------------
+@app.api_route("/set", methods=["GET", "POST"], response_class=PlainTextResponse)
+async def manual_set(value: int = Query(...)):
+    global kill_count
+    kill_count = value
+    return str(kill_count)
+
+
+# -----------------------------------------------------
+# 🔍 現在の値を確認
+# -----------------------------------------------------
+@app.get("/current", response_class=PlainTextResponse)
+def current():
+    global kill_count
+    return str(kill_count)
 
 
 # -----------------------------------------------------
