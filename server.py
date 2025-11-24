@@ -11,7 +11,11 @@ app = FastAPI()
 
 SECRET_TOKEN = os.getenv("GIFT_HUB_TOKEN", "nezusystemde")
 
+# ==============================
+# キルカウント
+# ==============================
 kill_count = 0
+
 
 class ConnectionManager:
     def __init__(self):
@@ -36,8 +40,12 @@ class ConnectionManager:
         for d in dead:
             self.disconnect(d)
 
+
 manager = ConnectionManager()
 
+# -----------------------------------------------------
+# CORS
+# -----------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,7 +54,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔴 赤文字表示
+# -----------------------------------------------------
+# 🔴 ルート（OBS用・赤文字・カウンター）
+# -----------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def kill_overlay():
     global kill_count
@@ -78,7 +88,10 @@ def kill_overlay():
     </html>
     """
 
-# + / - キル追加
+
+# -----------------------------------------------------
+# + / - キル追加（GET / POST 両対応）
+# -----------------------------------------------------
 @app.api_route("/add", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def add(request: Request):
     global kill_count
@@ -92,47 +105,70 @@ async def add(request: Request):
 
     return str(kill_count)
 
-# リセット
+
+# -----------------------------------------------------
+# ♻ リセット（GET / POST 両対応）
+# -----------------------------------------------------
 @app.api_route("/reset", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def reset():
     global kill_count
     kill_count = 0
     return "0"
 
-# テンキー用
+
+# -----------------------------------------------------
+# 🎮 テンキー操作（マイナス仕様）
+# numpad=1 → -1
+# numpad=2 → -5
+# numpad=3 → -10
+# -----------------------------------------------------
 @app.api_route("/key", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def key_adjust(numpad: int = Query(...)):
     global kill_count
 
     if numpad == 1:
-        kill_count += 1
+        kill_count -= 1
     elif numpad == 2:
-        kill_count += 5
+        kill_count -= 5
     elif numpad == 3:
-        kill_count += 10
+        kill_count -= 10
     else:
         return "Invalid key"
 
     return str(kill_count)
 
-# 手動セット
+
+# -----------------------------------------------------
+# ✍ 手動で値をセット（トラブル時用）
+# -----------------------------------------------------
 @app.api_route("/set", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def manual_set(value: int = Query(...)):
     global kill_count
     kill_count = value
     return str(kill_count)
 
-# 確認用
+
+# -----------------------------------------------------
+# 🔍 現在の値を確認
+# -----------------------------------------------------
 @app.get("/current", response_class=PlainTextResponse)
 def current():
     global kill_count
     return str(kill_count)
 
+
+# -----------------------------------------------------
+# 既存：テスト用HTML
+# -----------------------------------------------------
 @app.get("/gift-tester.html", response_class=HTMLResponse)
 def gift_tester():
     with open("gift-tester.html", "r", encoding="utf-8") as f:
         return f.read()
 
+
+# -----------------------------------------------------
+# 既存：ギフト受付（キー操作）
+# -----------------------------------------------------
 @app.post("/gift")
 async def gift(
     token: str = Query(...),
@@ -158,6 +194,10 @@ async def gift(
     await manager.broadcast(payload)
     return {"status": "ok", "sent_to": len(manager.active_connections)}
 
+
+# -----------------------------------------------------
+# 既存：WebSocket
+# -----------------------------------------------------
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     if token != SECRET_TOKEN:
@@ -173,6 +213,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     except Exception:
         manager.disconnect(websocket)
 
+
+# -----------------------------------------------------
+# Render 用の起動
+# -----------------------------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
