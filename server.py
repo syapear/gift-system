@@ -55,7 +55,7 @@ app.add_middleware(
 )
 
 # -----------------------------------------------------
-# 🔴 ルート（OBS用・赤文字・カウンター）
+# 🔴 ルート（OBS用・赤文字）
 # -----------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def kill_overlay():
@@ -90,7 +90,7 @@ def kill_overlay():
 
 
 # -----------------------------------------------------
-# + / - キル追加（GET / POST 両対応）
+# + / - キル増減（GET / POST 両対応）
 # -----------------------------------------------------
 @app.api_route("/add", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def add(request: Request):
@@ -107,7 +107,7 @@ async def add(request: Request):
 
 
 # -----------------------------------------------------
-# ♻ リセット（GET / POST 両対応）
+# ♻ リセット
 # -----------------------------------------------------
 @app.api_route("/reset", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def reset():
@@ -117,10 +117,15 @@ async def reset():
 
 
 # -----------------------------------------------------
-# 🎮 テンキー操作（マイナス仕様）
-# numpad=1 → -1
-# numpad=2 → -5
-# numpad=3 → -10
+# 🎮 テンキー操作（マイナス & プラス）
+#
+#  1 → -1
+#  2 → -5
+#  3 → -10
+#
+#  4 → +1
+#  5 → +5
+#  6 → +10
 # -----------------------------------------------------
 @app.api_route("/key", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def key_adjust(numpad: int = Query(...)):
@@ -132,6 +137,13 @@ async def key_adjust(numpad: int = Query(...)):
         kill_count -= 5
     elif numpad == 3:
         kill_count -= 10
+
+    elif numpad == 4:
+        kill_count += 1
+    elif numpad == 5:
+        kill_count += 5
+    elif numpad == 6:
+        kill_count += 10
     else:
         return "Invalid key"
 
@@ -139,7 +151,7 @@ async def key_adjust(numpad: int = Query(...)):
 
 
 # -----------------------------------------------------
-# ✍ 手動で値をセット（トラブル時用）
+# ✍ 手動で値をセット
 # -----------------------------------------------------
 @app.api_route("/set", methods=["GET", "POST"], response_class=PlainTextResponse)
 async def manual_set(value: int = Query(...)):
